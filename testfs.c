@@ -100,9 +100,50 @@ void test_ialloc(void)
 
     mkfs();
 
+    struct inode *in = ialloc();
+
     CTEST_ASSERT(
-        ialloc() == 0,
+        in->inode_num == 0,
         "ialloc works"
+    );
+
+    image_close();
+}
+
+void test_incore(void)
+{
+    incore_free_all();
+
+    struct inode *x = incore_find_free();
+
+    x->ref_count = 1;
+    x->inode_num = 5;
+
+    CTEST_ASSERT(
+        incore_find(5) == x,
+        "incore_find works"
+    );
+}
+
+void test_inode_rw(void)
+{
+    image_open("disk.img", 1);
+
+    mkfs();
+
+    struct inode in = {0};
+    struct inode out = {0};
+
+    in.inode_num = 0;
+    in.size = 1234;
+
+    write_inode(&in);
+
+    read_inode(&out, 0);
+
+    CTEST_ASSERT(
+        out.size == 1234,
+        "inode rw works"
     );
 
     image_close();
@@ -116,6 +157,8 @@ int main(void)
     test_ialloc();
     test_set_free();
     test_find_free();
+    test_incore();
+    test_inode_rw();
     CTEST_RESULTS();
     CTEST_EXIT();
 }

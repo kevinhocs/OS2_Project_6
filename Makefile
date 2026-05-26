@@ -3,8 +3,8 @@ CFLAGS=-Wall -Wextra -Werror -DCTEST_ENABLE
 
 all: libvvsfs.a testfs
 
-libvvsfs.a: image.o block.o free.o inode.o
-	ar rcs libvvsfs.a image.o block.o free.o inode.o
+libvvsfs.a: image.o block.o free.o inode.o pack.o
+	ar rcs libvvsfs.a image.o block.o free.o inode.o pack.o
 
 testfs: testfs.o libvvsfs.a
 	$(CC) $(CFLAGS) -o testfs testfs.o -L. -lvvsfs
@@ -23,6 +23,9 @@ free.o: free.c free.h
 
 inode.o: inode.c inode.h block.h free.h
 	$(CC) $(CFLAGS) -c inode.c
+
+pack.o: pack.c pack.h
+	$(CC) $(CFLAGS) -c pack.c
 
 test: testfs
 	./testfs
