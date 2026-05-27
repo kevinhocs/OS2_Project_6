@@ -149,6 +149,38 @@ void test_inode_rw(void)
     image_close();
 }
 
+void test_iget(void)
+{
+    incore_free_all();
+
+    struct inode *a = iget(3);
+    struct inode *b = iget(3);
+
+    CTEST_ASSERT(
+        a == b,
+        "iget returns same inode"
+    );
+
+    CTEST_ASSERT(
+        a->ref_count == 2,
+        "iget increments ref_count"
+    );
+}
+
+void test_iput(void)
+{
+    incore_free_all();
+
+    struct inode *in = iget(1);
+
+    iput(in);
+
+    CTEST_ASSERT(
+        in->ref_count == 0,
+        "iput decrements ref_count"
+    );
+}
+
 int main(void)
 {
     CTEST_VERBOSE(1);
@@ -159,6 +191,8 @@ int main(void)
     test_find_free();
     test_incore();
     test_inode_rw();
+    test_iget();
+    test_iput();
     CTEST_RESULTS();
     CTEST_EXIT();
 }
