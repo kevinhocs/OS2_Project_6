@@ -1,10 +1,12 @@
 #include <string.h>
+
 #include "free.h"
 #include "inode.h"
-
 #include "image.h"
 #include "block.h"
 #include "ctest.h"
+#include "pack.h"
+#include "dir.h"
 
 #define BLOCK_SIZE 4096
 
@@ -50,6 +52,38 @@ void mkfs(void)
     block[0] = 0x7F;
 
     bwrite(2, block);
+
+    struct inode *root = ialloc();
+
+    int root_block = alloc();
+
+    root->flags = 2;
+    root->size = 64;
+    root->block_ptr[0] = root_block;
+
+    unsigned char dirblock[BLOCK_SIZE];
+
+    memset(dirblock, 0, BLOCK_SIZE);
+
+    write_u16(dirblock, root->inode_num);
+
+    strcpy(
+        (char *)(dirblock + 2),
+        "."
+    );
+
+    write_u16(dirblock + 32, root->inode_num);
+
+    strcpy(
+        (char *)(dirblock + 34),
+        ".."
+    );
+
+    bwrite(root_block, dirblock);
+
+    write_inode(root);
+
+    iput(root);
 }
 
 void test_set_free(void)
@@ -87,7 +121,7 @@ void test_alloc(void)
     mkfs();
 
     CTEST_ASSERT(
-        alloc() == 7,
+        alloc() == 8,
         "alloc works"
     );
 
@@ -103,7 +137,7 @@ void test_ialloc(void)
     struct inode *in = ialloc();
 
     CTEST_ASSERT(
-        in->inode_num == 0,
+        in->inode_num == 1,
         "ialloc works"
     );
 
@@ -181,6 +215,34 @@ void test_iput(void)
     );
 }
 
+void test_directory(void)
+{
+    image_open("disk.img", 1);
+
+    mkfs();
+
+    struct directory *dir = directory_open(0);
+    struct directory_entry ent;
+
+    directory_get(dir, &ent);
+
+    CTEST_ASSERT(
+        strcmp(ent.name, ".") == 0,
+        "first directory entry is ."
+    );
+
+    directory_get(dir, &ent);
+
+    CTEST_ASSERT(
+        strcmp(ent.name, "..") == 0,
+        "second directory entry is .."
+    );
+
+    directory_close(dir);
+
+    image_close();
+}
+
 int main(void)
 {
     CTEST_VERBOSE(1);
@@ -193,6 +255,7 @@ int main(void)
     test_inode_rw();
     test_iget();
     test_iput();
+    test_directory();
     CTEST_RESULTS();
     CTEST_EXIT();
 }
