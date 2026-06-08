@@ -2,9 +2,8 @@
 #include "free.h"
 
 #include "block.h"
+#include "fs_layout.h"
 #include "image.h"
-
-#define BLOCK_SIZE 4096
 
 unsigned char *bread(int block_num, unsigned char *block)
 {
@@ -26,7 +25,7 @@ int alloc(void)
 {
     unsigned char block[BLOCK_SIZE];
 
-    bread(2, block);
+    bread(FREE_BITMAP_BLOCK_NUM, block);
 
     int block_num = find_free(block);
 
@@ -36,7 +35,7 @@ int alloc(void)
 
     set_free(block, block_num, 1);
 
-    bwrite(2, block);
+    bwrite(FREE_BITMAP_BLOCK_NUM, block);
 
     return block_num;
 }

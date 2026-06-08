@@ -19,4 +19,7 @@ int directory_get(
     struct directory_entry *ent
 );
 void directory_close(struct directory *dir);
+
+int directory_make(char *path);
+
 #endif
